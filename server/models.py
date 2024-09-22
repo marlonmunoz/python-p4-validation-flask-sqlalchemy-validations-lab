@@ -12,6 +12,20 @@ class Author(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
     # Add validators 
+    # Requires each record to have a name
+    @validates('name', 'phone_number')                                    
+    def validate_name(self, key, value):                   
+        if key == 'name':
+            if not value:
+                raise ValueError('Name is required')
+            if Author.query.filter(Author.name == value).first():
+                raise ValueError('Name is already in use')
+        elif key == 'phone_number':
+            if not value.isdigit() or len(value) != 10:
+                raise ValueError('Phone number must be 10 digits long')
+        return value
+
+    
 
     def __repr__(self):
         return f'Author(id={self.id}, name={self.name})'
@@ -28,6 +42,27 @@ class Post(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
     # Add validators  
+    @validates('title', 'content', 'category', 'summary')
+    def validate_title(self, key, value):
+        if key == 'title':
+            if not value:
+                raise ValueError('Title is required')
+            clickbait_phrases = ["Won't Believe", "Secret", "Top", "Guess"]
+            if not any(phrase in value for phrase in clickbait_phrases):
+                raise ValueError('Title must contain one of the following phrases: "Won\'t Believe", "Secret", "Top", "Guess"')
+    
+        elif key == 'content':
+            if len(value) < 250:
+                raise ValueError('Content must be at least 250 characters long')
+        elif key == 'summary':
+            if len(value) > 250:
+                raise ValueError('Summary must be less than 250 characters long')
+        elif key == 'category':
+            if value not in ['Fiction', 'Non-Fiction']:
+                raise ValueError('Category must be either "Fiction" or "Non-Fiction"')
+   
+   
+        return value
 
 
     def __repr__(self):
